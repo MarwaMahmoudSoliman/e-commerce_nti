@@ -1,3 +1,4 @@
+
 import { Schema, model } from 'mongoose';
 import { Categories } from '../interfaces/categories';
 
