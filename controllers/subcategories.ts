@@ -1,28 +1,20 @@
-import { NextFunction, Request, Response } from "express";
-import asyncHandler from 'express-async-handler';
+import { createOne, deleteOne, getAll, getOne, updateOne } from "./refactorHandling";
 import subcategoriesModel from "../models/subcategoriesModel";
 import { Subcategories } from "../interfaces/subcategories";
+import { NextFunction, Request, Response } from "express";
+import { FilterData } from "../interfaces/filterData";
 
-export const getAllSubcategories = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-  const subcategories: Subcategories[] = await subcategoriesModel.find()
-  res.status(200).json({ data: subcategories})
-});
+export const filterSubcategories = (req: Request, res: Response, next: NextFunction) => {
+  let filterData: FilterData = {};
+  if (req.params.categoryId) {
+    filterData.category = req.params.categoryId;
+  }
+  req.filterData = filterData;
+  next();
+}
 
-export const createSubategory = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-  const subcategories: Subcategories = await subcategoriesModel.create(req.body);
-  res.status(201).json({ data:subcategories  })
-});
-
-export const getSubcategory = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-  const subcategory: Subcategories | null = await subcategoriesModel.findById(req.params.id);
-  res.status(200).json({ data:subcategory })
-});
-
-export const updateSubCategory = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-  const subcategory: Subcategories | null = await subcategoriesModel.findByIdAndUpdate(req.params.id, req.body, { new: true });
-  res.status(200).json({ data: subcategory})
-});
-export const deleteSubCategory = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-  const subcategory: Subcategories| null = await subcategoriesModel.findByIdAndDelete(req.params.id);
-  res.status(204).json()
-});
+export const getAllSubcategories = getAll<Subcategories>(subcategoriesModel, 'subcategories');
+export const createSubcategory = createOne<Subcategories>(subcategoriesModel);
+export const getSubcategory = getOne<Subcategories>(subcategoriesModel);
+export const updateSubcategory = updateOne<Subcategories>(subcategoriesModel)
+export const deleteSubcategory = deleteOne<Subcategories>(subcategoriesModel)
