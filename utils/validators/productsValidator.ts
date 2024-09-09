@@ -4,157 +4,146 @@ import validatorMiddleware from "../../middlewares/validatorMiddleware";
 import categoriesModel from "../../models/categoriesModel";
 import subcategoriesModel from "../../models/subcategoriesModel";
 import productsModel from "../../models/productsModel";
-import { Products } from "../../interfaces/products";
+
 export const createProductValidator: RequestHandler[] = [
   check('name')
-    .notEmpty().withMessage('product name required')
-    .isLength({ min: 2, max: 50 }).withMessage('name length must be between 2 & 50'),
-    check('description')
-    .notEmpty().withMessage('product description required')
-    .isLength({min : 2 ,max:500}).withMessage('description length must be between 2 & 500'),
-     check('quantity').optional()
-     .isNumeric().withMessage('quantity must be number').toInt()
-     .custom((val:number) => {
-        if(val < 0){throw new Error ('invalid quantity')}
-return true ;
-     })
+    .notEmpty().withMessage('Product name is required')
+    .isLength({ min: 2, max: 50 }).withMessage('Name length must be between 2 and 50 characters'),
+  
+  check('description')
+    .notEmpty().withMessage('Product description is required')
+    .isLength({ min: 2, max: 500 }).withMessage('Description length must be between 2 and 500 characters'),
+  
+  check('quantity')
+    .optional()
+    .isNumeric().withMessage('Quantity must be a number')
+    .toInt()
+    .custom((val: number) => {
+      if (val < 0) throw new Error('Invalid quantity');
+      return true;
+    }),
 
+  check('price')
+    .optional()
+    .isNumeric().withMessage('Price must be a number')
+    .toFloat()
+    .custom((val: number) => {
+      if (val <= 0) throw new Error('Invalid price');
+      return true;
+    }),
 
+  check('priceAfterDiscount')
+    .optional()
+    .isNumeric().withMessage('Price with discount must be a number')
+    .toFloat()
+    .custom((val: number, { req }) => {
+      if (val < 0) throw new Error('Invalid discount price');
+      return true;
+    }),
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-     ,check('price')
-     .optional()
-     .isNumeric().withMessage('price must be number').toFloat()
-     .custom((val: number) => {
-       if (val <= 0) { throw new Error('invalid price') }
-       return true;
-     }),
-   check('priceAfterDiscount').optional()
-     .isNumeric().withMessage('price with discount must be number').toFloat()
-     .custom((val: number, { req }) => {
-       if (val < 0) { throw new Error('invalid discount price') }
-       return true;
-     }),
-    
-      
-      ];      
-    
   check('category')
-    .notEmpty().withMessage('category required')
-    .isMongoId().withMessage('invalid category id')
+    .notEmpty().withMessage('Category is required')
+    .isMongoId().withMessage('Invalid category ID')
     .custom(async (val: string) => {
       const category = await categoriesModel.findById(val);
-      if (!category) { throw new Error('category not found') }
+      if (!category) throw new Error('Category not found');
       return true;
     }),
+
   check('subcategory')
-    .notEmpty().withMessage('subcategory required')
-    .isMongoId().withMessage('invalid subcategory id')
+    .notEmpty().withMessage('Subcategory is required')
+    .isMongoId().withMessage('Invalid subcategory ID')
     .custom(async (val: string, { req }) => {
       const subcategory = await subcategoriesModel.findById(val);
-      if (!subcategory) { throw new Error('subcategory not found') }
+      if (!subcategory) throw new Error('Subcategory not found');
       if (subcategory.category._id!.toString() !== req.body.category) {
-        throw new Error('subcategory not exist in this category')
+        throw new Error('Subcategory does not exist in this category');
       }
       return true;
     }),
-  validatorMiddleware
 
-
-export const getProductValidator: RequestHandler[] = [
-  check('id').isMongoId().withMessage('invalid mongo id'),
-  validatorMiddleware
+  validatorMiddleware,
 ];
 
+export const getProductValidator: RequestHandler[] = [
+  check('id').isMongoId().withMessage('Invalid Mongo ID'),
+  validatorMiddleware,
+];
+
+
 export const updateProductValidator: RequestHandler[] = [
-  check('id').isMongoId().withMessage('invalid mongo id'),
+  check('id').isMongoId().withMessage('Invalid Mongo ID'),
+
   check('name').optional()
-    .isLength({ min: 2, max: 50 }).withMessage('name length must be between 2 & 50'),
+    .isLength({ min: 2, max: 50 }).withMessage('Name length must be between 2 and 50 characters'),
+
   check('description').optional()
-    .isLength({ min: 2, max: 500 }).withMessage('description length must be between 2 & 500'),
-  check('quantity').optional()
-    .isNumeric().withMessage('quantity must be number').toInt()
-    .custom((val:number) => {
-        if(val<0){throw new Error('invalid Quantity')}
-        return true;
-    }),
-    ,check('price')
+    .isLength({ min: 2, max: 500 }).withMessage('Description length must be between 2 and 500 characters'),
+
+  check('quantity')
     .optional()
-    .isNumeric().withMessage('price must be a number').toFloat()
+    .isNumeric().withMessage('Quantity must be a number')
+    .toInt()
     .custom((val: number) => {
-      if (val <= 0) {
-        throw new Error('invalid price');
-      }
+      if (val < 0) throw new Error('Invalid quantity');
       return true;
     }),
 
-    check('priceAfterDiscount')
+  check('price')
     .optional()
-    .isNumeric().withMessage('price with discount must be a number').toFloat()
-    .custom(async (val: number, { req }) => {
-      
+    .isNumeric().withMessage('Price must be a number')
+    .toFloat()
+    .custom((val: number) => {
+      if (val <= 0) throw new Error('Invalid price');
+      return true;
+    }),
 
-      const productId = req.params ?.id || req.body.id;
-      
-      if (!productId) {
-        throw new Error('Product ID is missing');
-      }
-  
+  check('priceAfterDiscount')
+    .optional()
+    .isNumeric().withMessage('Price with discount must be a number')
+    .toFloat()
+    .custom(async (val: number, { req }) => {
+      const productId = req.params?.id || req.body.id;
+      if (!productId) throw new Error('Product ID is missing');
+
       const product = await productsModel.findById(productId);
-      
-      if (!product) {
-        throw new Error('Product not found');
-      }
-  
-     
+      if (!product) throw new Error('Product not found');
+
       if (!val) {
         const originalPrice = req.body.price || product.price;
         req.body.priceAfterDiscount = originalPrice;
       }
-  
-  
-      if (val && val < 0) {
-        throw new Error('invalid discount price');
-      }
-  
+
+      if (val && val < 0) throw new Error('Invalid discount price');
       return true;
     }),
-  ];      
 
   check('category')
     .optional()
-    .isMongoId().withMessage('invalid category id')
+    .isMongoId().withMessage('Invalid category ID')
     .custom(async (val: string) => {
       const category = await categoriesModel.findById(val);
-      if (!category) { throw new Error('category not found') }
+      if (!category) throw new Error('Category not found');
       return true;
     }),
+
   check('subcategory')
     .optional()
-    .isMongoId().withMessage('invalid subcategory id')
+    .isMongoId().withMessage('Invalid subcategory ID')
     .custom(async (val: string, { req }) => {
       const subcategory = await subcategoriesModel.findById(val);
-      if (!subcategory) { throw new Error('subcategory not found') }
+      if (!subcategory) throw new Error('Subcategory not found');
       if (subcategory.category._id!.toString() !== req.body.category) {
-        throw new Error('subcategory not exist in this category')
+        throw new Error('Subcategory does not exist in this category');
       }
       return true;
     }),
-  validatorMiddleware
+
+  validatorMiddleware,
 ];
+
+
 export const deleteProductValidator: RequestHandler[] = [
-  check('id').isMongoId().withMessage('invalid mongo id'),
-  validatorMiddleware
+  check('id').isMongoId().withMessage('Invalid Mongo ID'),
+  validatorMiddleware,
 ];
